@@ -23,13 +23,9 @@ use std::{
 
 mod error;
 mod keystore;
-mod utils;
-
-#[cfg(feature = "geth-compat")]
-use utils::geth_compat::address_from_pk;
 
 pub use error::KeystoreError;
-pub use keystore::{CipherparamsJson, CryptoJson, EthKeystore, KdfType, KdfparamsType};
+pub use keystore::{CipherparamsJson, CryptoJson, Keystore, KdfType, KdfparamsType};
 
 const DEFAULT_CIPHER: &str = "aes-128-ctr";
 const DEFAULT_KEY_SIZE: usize = 32usize;
@@ -106,7 +102,7 @@ where
     let mut file = File::open(path)?;
     let mut contents = String::new();
     file.read_to_string(&mut contents)?;
-    let keystore: EthKeystore = serde_json::from_str(&contents)?;
+    let keystore: Keystore = serde_json::from_str(&contents)?;
 
     // Derive the key.
     let key = match keystore.crypto.kdfparams {
@@ -231,7 +227,7 @@ where
     };
 
     // Construct and serialize the encrypted JSON keystore.
-    let keystore = EthKeystore {
+    let keystore = Keystore {
         id,
         version: 3,
         crypto: CryptoJson {
@@ -248,8 +244,6 @@ where
             },
             mac: mac.to_vec(),
         },
-        #[cfg(feature = "geth-compat")]
-        address: address_from_pk(&pk)?,
     };
     let contents = serde_json::to_string(&keystore)?;
 
